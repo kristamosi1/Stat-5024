@@ -1,0 +1,351 @@
+---
+title: "The Five W's of the Paris Agreement"
+author: "Krista Mosi"
+output:
+  html_document:
+    df_print: paged
+    theme: readable
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+scale_colour_continuous <- scale_colour_viridis_c
+scale_colour_discrete   <- scale_colour_viridis_d
+scale_colour_binned     <- scale_colour_viridis_b
+```
+
+```{r, include=FALSE}
+country_list <- read_csv("C:/Users/krist/Desktop/stat 5024, Spring 2021/midterm/data/csvData.csv")
+
+#cleaning up list of countries
+country_list <- country_list[,-1]
+country_list <- country_list[,-2]
+
+in_agreement <- rep("yes", length(196))
+
+country_list <- cbind(country_list, in_agreement)
+
+#adding missing no countries
+country_list <- country_list %>%  add_row(country = "Democratic Republic of the Congo", in_agreement = "yes") 
+
+country_list <- country_list[-c(43,131,18,36,105, 82, 17),]
+```
+&nbsp;  
+&nbsp;  
+ 
+
+
+
+# **What?** 
+
+```{r, echo = FALSE, out.width= "330px", fig.align='right', out.extra='style="float:right; padding:10px"'}
+library(knitr)
+knitr::include_graphics("C:/Users/krist/Desktop/stat 5024, Spring 2021/midterm/Paris-Agreement.jpg")
+
+```
+&nbsp;  
+ 
+
+
+## *The Paris Agreement*    
+
+
+The Paris Agreement is a legally binding international treaty on climate change.  This is a historic treaty, because for the first time, it brings nations together into a common cause to undertake the massive challenge of combating climate change and to adapt to its effects. 
+
+### **Goals** 
+
+What are the goals of this historic agreement? 
+
+-   To limit global warming to well below 2, preferably 1.5 degrees [Celsius](https://unfccc.int/process-and-meetings/the-paris-agreement/the-paris-agreement)
+-   Parties aim to reach global peaking of greenhouse gas emissions as soon as possible to achieve a climate neutral world by 2050
+-   Provide a framework for transparency, accountability, and achievement of more ambitious targets.
+-   Mobilize support for climate change mitigation and adaptation in developing nations.
+
+### How does the agreement work towards these goals?  
+&nbsp; 
+
+Implementation of the *Paris Agreement* requires economic and social transformation, based on the best available science. The Paris Agreement works on a 5- year cycle of increasingly ambitious climate action carried out by countries. By 2020, countries submit their plans for climate action known as nationally determined contributions (NDCs).  In their NDCs, countries communicate actions they will take to reduce their Greenhouse Gas emissions in order to reach the goals set out in the agreement.
+
+Each country, or party, is also encouraged to submit long-term strategies. These strategies display the parties long term planning on how to lower greenhouse gas emissions, and the strategies they are developing to do so.  
+
+&nbsp;  
+&nbsp;  
+&nbsp;  
+
+
+# **Who? Where? When?** 
+&nbsp; 
+
+#### Now that we know what *The Paris Agreement* is, let's get some answers on how it came to be... 
+
+The United Nations Framework Convention on Climate Change, UNFCCC for short, is the United Nations entity supporting the global response to climate change. UNFCCC was actually entered into force in March of 1994, and has been operating as the foremost leader in the fight against climate change.  They hold conventions every year, called Conference of the Parties, or COP, as well as releasing annual reports, like this one from [2019](https://unfccc.int/documents/234048), on the status of the climate change threat to the globe. UNFCCC turned 25 years old in 2019.  
+&nbsp; 
+&nbsp; 
+```{r, echo = FALSE, out.width= "270px", out.height = "200px", fig.align='right', out.extra='style="float:right; padding:10px"'}
+library(knitr)
+knitr::include_graphics("C:/Users/krist/Desktop/stat 5024, Spring 2021/midterm/UNFCCC.jpg")
+
+```
+
+It was at the 21st Conference of the Parties (COP 21) that the Paris Agreement was hammered out for over two weeks.  The Paris Agreement was open for signature on Earth Day, April 2016 at the United Nations headquarters in New York City. It entered into force on November of the same year, when it met the necessary "double threshold" (ratification by 55 countries that account for at least 55% of global emissions) qualification.   Since then, more countries joined and ratified *The Paris Agreement*, bringing the current total to 190 countries/parties out of the 197 parties in the convention. Below in green, we can see the parties that signed the agreement.
+
+
+
+
+
+
+```{r, include = FALSE}
+library(tidyverse)
+library(rvest)
+library(ggmap)
+library(stringr)
+library(plotly)
+# Get map data 
+map_world <- map_data("world")
+as.factor(country_list$country) %>% levels()
+
+#recode to countries so they will match exactly
+country_list$country <- recode_factor(country_list$country
+                               ,'United States' = 'USA'
+                               ,'United Kingdom' = 'UK')
+# join two data sets together
+
+map_world_joined <- left_join(map_world, country_list, by= c('region' = 'country'))
+
+
+```
+
+```{r, echo = FALSE,fig.align='center', fig.width= 8.5, fig.height= 6, fig.cap= "Countries that have not ratified the agreement: Angola, Eritrea, Iran, Iraq, Libya, South Sudan, Turkey"}
+#creating global map
+
+plot_1 <- ggplot() +
+  geom_polygon(data = map_world_joined, aes(x = long, y = lat, group = group, fill = in_agreement),color = "black") +
+  scale_fill_manual(values = c("#336600", "blue")) +
+  labs(title = "Countries in Paris Climate Agreement"
+       ,subtitle = "source: https://unfccc.int/") +
+  theme(text = element_text(color = "black")
+        ,panel.background = element_rect(fill = "#FFFFFF")
+        ,plot.background = element_rect(fill = "#FFFFFF")
+        ,panel.grid = element_blank()
+        ,plot.title = element_text(size = 25)
+        ,plot.subtitle = element_text(size = 14)
+        ,axis.text = element_blank()
+        ,axis.title = element_blank()
+        ,axis.ticks = element_blank()
+        ,legend.position = "none"
+        )
+plot_1
+```
+
+
+
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp;  
+&nbsp; 
+
+# **Why?**  
+&nbsp; 
+
+Now that we know what *The Paris Agreement* is, when and where it was created, and by whom it was signed and ratified, there is one last "w" left to be answered.  Perhaps the most important one, which is why?  Why was it necessary to create a historic new agreement with almost unanimous global participation? It is not very often these agreements happen, so there must be a compelling reason.
+
+Recall the goals of *The Paris Agreement*. To limit global warming to well below 2 degrees Celsius, and to reach global peaking of greenhouse gases. Temperature and emissions levels are of great concern because they are at the root of the climate change problem. 
+
+### Temperature rise over time
+
+Temperature is of great concern because it has been steadily rising. If we examine the time frame from 1850, at the end of the industrial revolution, to today, we can see this steady increase.  The temperature has not just been rising for the globe annually, it has steadily risen for every month out of the year. It is not just hotter summers, it is a year round steady temperature rise. We can visually see this trend in figure 2 below.
+
+```{r, message=FALSE,echo=FALSE}
+# Data set #1 
+Global_Temp_country <- read_csv("C:/Users/krist/Desktop/stat 5024, Spring 2021/midterm/data/GlobalLandTemperatures_GlobalLandTemperaturesByCountry.csv")
+
+#cleaning up data set #1
+Global_Temp_country <- rename(Global_Temp_country, Date = dt)
+
+library(lubridate)
+Global_Temp_country <- Global_Temp_country %>%  select(Date, AverageTemperature, Country) %>% 
+  filter(Date >= as.Date("1850-01-01") & Date >= as.Date("12-12-01"))
+
+col.names1 <- c("Year", "Month", "Day")
+
+Global_Temp_country <- separate(Global_Temp_country, "Date",
+                                into = col.names1,
+                                sep = "-",
+                                remove = FALSE)
+Global_Temp_country <- Global_Temp_country %>%  select(Date, Year, Month, Day, AverageTemperature, Country)
+```
+
+```{r, fig.align='center', fig.height= 7.5, fig.width= 9.5}
+
+#creating plot of average temp over time by month
+
+Average_Temp_by_year <- Global_Temp_country %>% 
+      group_by(Date) %>% 
+      summarise(Global_Avg = mean(AverageTemperature, na.rm = T))
+
+col.names1 <- c("Year", "Month", "Day")
+
+Average_Temp_by_year <- separate(Average_Temp_by_year, "Date",
+                                into = col.names1,
+                                sep = "-",
+                                remove = FALSE)
+#creating each line on plot, filtering by month
+plot1 <- ggplot() + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "01"),aes(x = Date, y = Global_Avg, color = Month)) +  
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "02"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "03"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "04"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "05"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "06"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "07"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "08"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "09"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "10"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "11"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "12"),aes(x = Date, y = Global_Avg, color = Month)) +
+  labs(x = "Year" , y = "Global Average Temperature", title = "Figure 2: Average Temperature Over Time by Month") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_hue(name = "Month", labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+#fig1 <- ggplotly(plot1) %>%  layout(autosize= T, width = 1000, height = 750)
+print(plot1)
+
+
+```
+
+&nbsp;
+
+```{r, fig.align='center', message= FALSE}
+
+library(kableExtra)
+#column 1 year 1850
+col_1 <- c("1850","1850","1850","1850","1850","1850","1850","1850","1850","1850","1850","1850")
+
+#months col
+col_2 <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# global avg 1850
+col_3 <- c("9.4514", "12.5455", "13.7265","16.5740","19.0170", "21.8931", "23.0662", "22.7950", "20.2808"," 17.1664", "14.4022", "10.8179" )
+
+#year 2012/2012
+col_4 <- c("2013","2013","2013","2013","2013","2013","2013","2013","2013","2012", "2012","2012")
+
+#global avg 2012/2013
+col_5 <- c("15.0427", "15.9032", "17.2404", "19.3874", "21.4781", " 22.7445", "23.4717", "23.2979", "25.0651", "20.1340", "18.1039", "15.2891")
+
+#difference between 1850 and 2013 column
+
+col_6 <- c(" 5.591", "3.357", "3.514", "2.813", "2.461", "0.851", "0.405", "0.503", "4.784", "2.968", "3.702", "4.471")
+
+# row headers
+
+row_header <- c("Year", "Month", "Global Average Temperature 1850", "Year", "Month", "Global Average Temperature 2013", " Temperature Difference")
+
+# puts together all the columns
+comb_col <- cbind(col_1, col_2, col_3, col_4, col_2, col_5, col_6)
+
+
+rownames(comb_col) <- NULL
+colnames(comb_col) <- row_header
+
+# create table
+
+kable(comb_col,
+      linesep = "",
+      format = "html",
+      caption = "Comparing Global Average Temperature Degrees Celsius") %>% kable_styling(font_size = 14, latex_options = "HOLD_position") %>%
+  kable_classic_2(full_width = F) %>% 
+  column_spec(3, bold = T, background = "beige") %>% 
+  column_spec(6, bold = T, background = "beige") %>% 
+  column_spec(7, bold = T, color = "#336600")
+```
+&nbsp;
+
+This table also illustrates the rise in global temperature, and how much of a difference there is in degrees Celsuis between 1850 and 2013.  The highest increases are seen in September, November, December and January.  Why is a rise in temperature, even by a few degrees so detrimental?  
+
+All natural systems are sensitive to climate warming. Environments are as well.  When temperatures increase, the habitat changes, setting off a domino effect.  For example, the melting of the polar ice caps has lead to sea levels rising. This has a domino effect because it has lead to increases in coastal erosion, as well as elevated storms and floods.  
+
+Warming temperatures are effecting the coasts, as well as inland on our rainforests.  Temperature increases has lead to a reduction of rainforest biomass and will increase deforestation and wildfires.  There are different impacts on almost every environment in the world, some that have already begun to happen and some that will happen if the goal of curbing temperature increase is not met. Explore how different regions are being individually impacted [here](https://climate.nasa.gov/news/2878/a-degree-of-concern-why-global-temperatures-matter/).
+
+
+
+### Rise in global emissions
+
+One of the many, if not the largest root in the problem of climate change is the rise in global emission levels. Emission levels refers to the levels of greenhouse gases being released into the atmosphere. One of the most well known gases is Carbon Dioxide, or CO2.
+
+The metaphor explains that like the windows in a greenhouse, these gases trap energy from the sun as heat. Without their role, the Earth would become quite cold. According to National Oceanic and the Atmospheric Administration (NOAA), global temperatures would average around -18 degrees celsius. Instead, the world is averaging around 18.3 degrees celsius.  But increases in greenhouse gases have tipped the Earth's energy budget out of balance, trapping additional heat and raising Earth's average temperature.  Human activity has been the driving factor in these extra greenhouse gases being released.
+
+We can see below the trends that emissions have taken over the last 150 + years. These are the top five countries in the world by emissions levels.  As countries became more industrialized, into the 1900s we see these lines steadily start to pick up. These trends can be linked to those human activities we started to do more and more, like burning fossil fuels for electricity, heat and transportation. 
+
+
+
+
+```{r, message=FALSE, include=FALSE}
+# importing and cleaning data set #2
+co2_emission <- read_csv("C:/Users/krist/Desktop/stat 5024, Spring 2021/midterm/data/co2_emission.csv")
+
+
+names(co2_emission)[4]<- paste("CO2_emissions")
+
+co2_emission <- co2_emission %>%  select(Year, Entity, CO2_emissions) %>% 
+  filter(Year >= "1850" & Year <= "2017")
+
+```
+
+
+
+```{r, fig.height= 6, fig.width= 9, fig.cap= "The y- axis scale has been square root transformed to accomodate right-skewing data"}
+library(ggthemes)
+# for summary stats, need to get rid of statistical difference # that is negative
+
+no_neg <- filter(co2_emission, !(Entity == "Statistical differences"))
+
+#creating list of top 10 countries by co2 emissions
+Co2_country_totals <- co2_emission %>% 
+                    group_by(Entity) %>% 
+                    summarise(total_emissions = sum(CO2_emissions, na.rm = T))
+
+top18 <- Co2_country_totals %>%  top_n(18, total_emissions)
+
+world_average <- mean(no_neg$CO2_emissions)
+
+plot2 <- ggplot() +
+  geom_line(data = co2_emission %>% filter(Entity %in% c("China", "Germany", "Russia", "United Kingdom", "United States")), 
+            aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_hline(yintercept = world_average, color = "black") +
+  geom_hline(yintercept = 0, color = "grey") +
+  scale_x_continuous(breaks = seq(1870,2017, by = 20)) + 
+  labs(y = "CO2 Emissions (tons)", title = "Figure 3: Top 5 Countries CO2 Emissions Over Time") +
+  scale_y_continuous(labels = scales::comma, trans = "sqrt", breaks = c(0, 2500000000, 5000000000, 7500000000, 10000000000), limits = c(0, 11000000000)) +
+  geom_text(aes(1830, world_average, label = paste0("World Average: ", scales::comma(world_average)), hjust = 0, vjust = -0.5)) +
+  scale_color_discrete("Country")+
+  theme(axis.text.x = element_text(angle = 30)) + 
+  theme_fivethirtyeight()
+plot2
+```
+
+
+&nbsp;
+&nbsp;
+
+#### The answer to **Why?** 
+
+The problem of climate change and these trends that drove it, couldn't be ignored any longer if we wanted to reverse the effects that have already begun.  Environmental effects have already started, and each party in the agreement has already begun to be effected. Whether it is longer and more dangerous heatwaves,  more frequent hurricanes and wildfires, or the decreasing population of polar bears.
+
+
+
+
+&nbsp; 
+
+
+# Conclusion
+
+While *The Paris Agreement* is the culmination of decades of international efforts to combat climate change. The Why? behind the agreement no longer could be ignored, and by creating the agreement the parties centralized the global fight against a common enemy.
+
+While the agreement is historical, even the UNFCCC has admitted that there needs to be a massive increase in action to achieve its goals.  However, there has been some positive progress made in just the few years since the agreement's entry into force.  The agreement has sparked new low-carbon solutions and markets created, meaning people and businesses are getting creative in how they are going to fight climate change.  More and more countries, regions, cities and companies are establishing carbon neutrality targets.  To be carbon neutral, means any emissions created must be offset by emissions they reduce elsewhere.  For example, Washington,DC pledged to become carbon neutral by 2050 and American University already [achieved](https://secondnature.org/climate-action-guidance/american-university/) carbon neutrality in 2018.  *The Paris Agreement* has created a clear framework for all countries, cities and buisiness alike, to make emissions reduction commitments and to strengthen their actions over time

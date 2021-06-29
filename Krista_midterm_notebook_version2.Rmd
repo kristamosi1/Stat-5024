@@ -1,0 +1,477 @@
+---
+title: "Global Temperature and CO2 Emission Trends"
+author: "*by Krista Mosi*"
+output:
+  html_notebook:
+    toc: TRUE
+    Toc_depth: 3
+    theme: united
+---
+
+
+
+```{r setup, include=FALSE, echo = FALSE}
+# This is the setup chunk
+#  Here you can set global options for the entire document
+
+library(knitr) # I recommend doing  this
+
+# Although you can call functions from a library using the following notation
+#  without loading the entire library.
+knitr::opts_chunk$set(echo = TRUE, 
+                      comment = NA,
+                      fig.path = "./figures/",
+                      fig.align = "center",
+                      message = FALSE, # Turn off load messages
+                      warning = FALSE # Turn off warnings
+                      )
+
+```
+
+
+# Overview
+
+In Paris 2015, at the United Nations Framework Convention on Climate Change, parties reached a landmark agreement on how to combat climate change. This agreement became known as The Paris Agreement, that for the first time brings all nations into a common cause to undertake the massive challenge of combating climate change and to adapt to its effects. The Paris Agreement was open for signature on Earth Day, April 2016 at the United Nations headquarters in New York City. It entered into force on November of the same year, when it met the necessary "double threshold" (ratification by 55 countries that account for at least 55% of global emissions) qualification. Since then, more countries joined and ratified The Paris Agreement, bringing the current total to 189 countries/parties out of the 197 parties in the convention. 
+
+Arguably one of the largest and most central goals of The Paris Agreement is the long-term temperature goal.  The aim is to keep a global temperature rise this century well below 2 degrees Celsius, and to pursue efforts to limit the temperature increase even further to just 1.5 degrees Celsius.  In order to reach the agreement's temperature goals, parties are aiming to reach a global peaking of green house gas emissions as soon as possible. Chief among them, carbon dioxide emissions.  
+
+Though The Paris Agreement is in its infancy, and data is limited on its current outputs, we can still look at the data that led to this point. Specifically, why did we eventually need to come to a global agreement of this scale? If the central aim is to curb temperature and emissions, what have they been like to this point, which gases are the biggest culprits, and which parties? This report will answer these questions by evaluating this data on the who, what, where and why of the climate crisis that has led us to this point. 
+
+\newpage
+# Data: 
+This research uses three data sources:
+
+*   Global Land Temperatures by Country
+*   CO2 Emissions by Country
+*   Greenhouse Gas Emissions by Category and Country
+
+
+```{r}
+#first data set
+library(readr)
+library(dplyr)
+library(tidyr)
+library(here)
+
+Global_Temp_country <- read_csv(here("data", "GlobalLandTemperatures_GlobalLandTemperaturesByCountry.csv"))
+
+```
+
+
+
+```{r}
+#cleaning up data set #1
+Global_Temp_country <- rename(Global_Temp_country, Date = dt)
+
+library(lubridate)
+Global_Temp_country <- Global_Temp_country %>%  select(Date, AverageTemperature, Country) %>% 
+  filter(Date >= as.Date("1850-01-01") & Date >= as.Date("12-12-01"))
+
+col.names1 <- c("Year", "Month", "Day")
+
+Global_Temp_country <- separate(Global_Temp_country, "Date",
+                                into = col.names1,
+                                sep = "-",
+                                remove = FALSE)
+Global_Temp_country <- Global_Temp_country %>%  select(Date, Year, Month, Day, AverageTemperature, Country)
+```
+
+
+### 1. Global Land Temperatures by Country
+
+The first data set I used for my research was the Global Land Temperatures by Country data set. The data set was compiled and published on Kaggle, but the raw data itself comes from the Berkeley Earth data page found here  [Berkeley Earth](http://berkeleyearth.org/archive/data/) . Berkeley Earth is an independent U.S non-profit organization focused on environmental data science. Berkeley Earth’s primary product is an analysis of summary air temperatures over land, they collect raw data nightly in their ongoing process. 
+
+This data contains temperature measures for every country in the world dating back to 1750. While this data is very comprehensive, I decided to shorten the time period, just evaluating from 1850 to present day (2013 for this data set).  The main reason I did this was because of the large amount of NA values given for countries, the further back the data goes. The data originally had 577462 observations, and now has 465370. With the five variables being Year, Month, Day, Average Temperature in Celsius, and Country. I did have to do some simple cleaning of the data for a better usability. Small things such as renaming the columns, and separating the "Date" column out. 
+
+The data from 1850 to present still tells a story, but with less missing values. Since this is time-series data, it will be great to evaluate the rise in temperatures over time. Below is a table showing a glimpse of what the data looks like, showing the average temperature for the first six months of 1850 for the Aland Islands (lies off the southwest coast of Finland).
+
+```{r, message=FALSE }
+# A look at data set #1
+library(kableExtra)
+kable(head(Global_Temp_country), caption = "Global Land Temperatures by Country Data Set Preview") %>% kable_styling(font_size = 14, latex_options = "HOLD_position") %>%  kable_classic_2(full_width = T)
+
+#This is table 1, table # does not show up in notebook format
+```
+
+ 
+```{r, message=FALSE, include=FALSE}
+# importing and cleaning data set #2
+co2_emission <- read_csv(here("data", "co2_emission.csv"))
+
+
+names(co2_emission)[4]<- paste("CO2_emissions")
+
+co2_emission <- co2_emission %>%  select(Year, Entity, CO2_emissions) %>% 
+  filter(Year >= "1850" & Year <= "2017")
+
+```
+
+### 2. CO2 Emissions by Country
+
+The second data set being used in the following report is a csv file containing the $CO^2$ emissions measured in tons for each country from 1750 to 2017. This is a public data set on Kaggle, that was scraped from the site [OurWorldInData ](https://ourworldindata.org/co2-and-other-greenhouse-gas-emissions) .  Our World in Data has created country profiles which allow us to explore the statistics for every country in the world. They focus on large world problems like climate change, poverty and disease.   
+
+Like the previous data set, I decided to shorten this data so it would range from 1850-2017. This helped with usability, and got rid of a lot of NA values, while still giving us a large date range to do time-analysis. The dimensions of this data set are now 19217 observations by three variables, Year, Entity (country/state) and $CO^2$ emissions. 
+
+
+```{r,message=FALSE,include=FALSE}
+#importing data set #3
+greenhouse_gas_data <- read_csv(here("data", "greenhouse_gas_inventory_data_data.csv"))
+
+```
+
+### 3. Greenhouse Gas Emissions by Category and Country
+
+Finally, the third data set that I am using in this report is the Greenhouse Gas Inventory Data. The data set was compiled and published on Kaggle, but the raw data itself comes from the United Nations, on the UN data page found here [UNdata](http://data.un.org/Explorer.aspx) . This data covers the period between 1990 and 2014, showing emissions levels by category of GHGs and country. One of the reasons I chose this data is because it comes directly from the United Nations and the convention itself.  The GHG data contain information on anthropogenic emissions of the following GHGs categories:  carbon dioxide (CO2), GHGs without Lulucf (Land Use, Land-use Change and Forestry), GHGs with Lulucf, methane (CH4), nitrous oxide (N2O), hydrofluorocarbons (HFCs), perfluorocarbons (PFCs), unspecified mix of HFCs and PFCs, sulphur hexafluoride (SF6) and nitrogen triflouride (NF3).  
+Anthropogenic emissions  are emissions of greenhouse gases, greenhouse gas precursors, and aerosols caused by human activities. These activities include the burning of fossil fuels, deforestation, land use changes, livestock production, fertilization, waste management, and industrial processes. 
+
+This data did not not require a lot of manipulating, except for re-organizing the category variable. The long name version of the 10 different categories of GHGs, that I changed to be factors, can be seen through the link to the original data set. For simplicity, I renamed the categories by their element names with some added detail where it was needed. In table 2, we can see the levels of the category variable that will be analyzed.
+
+```{r, message=FALSE}
+# cleaning up variable names for data set #3
+
+greenhouse_gas_data$category <- as.factor(greenhouse_gas_data$category)
+
+levels(greenhouse_gas_data$category) <- c("CO2", "GHG_without_Lulucf","GHG_with_Lulucf", "HFCS", "CH4", "NF3", "N2O", "PFCS", "SF6", "Unspecified_mix_HFCS_PFCS")
+
+
+# variables listed in the table
+
+vars_table2 <- c("CO2", "GHGs without Lulucf","GHG with Lulucf", "HFCS", "CH4", "NF3", "N2O", "PFCS", "SF6", "Unspecified mix of HFCS and PFCS")
+
+#column names for table
+info <- c("GHG category", "Definition")
+
+# definitions column info
+k2<- c("Carbon Dioxide", "Green House Gases without Land Use, Land-use Change and Forestry", "Green House Gases with Land Use, Land-use Change and Forestry", "Methane", "Nitrous Oxide", "Hydrofluorocarbons", "Perflurocarbons", "Unspecified mix of Hydrofluorocarbons and Perflurocarbons", "Sulfur Hexafluoride", "Nitrogen Triflouride" )
+
+# puts data together for table
+about <- cbind(vars_table2, k2)
+
+#removes rownames
+rownames(about) < NULL
+
+#puts in column names created 
+colnames(about) <- info
+
+#creation of table # 2. has table # but doesn't output in html
+kable(about, 
+      linesep = "",
+      format = "html",
+      caption = "GHG Categories in Data Set") %>% kable_styling(font_size = 14, latex_options = "HOLD_position") %>%
+  kable_classic_2(full_width = T)
+```
+
+
+
+# Research Questions and Background Exploratory Data Analysis 
+
+1. Background on the trend of global temperatures over time. 
+
+    * How much have temperatures risen since? 
+  
+    * Determine what months, if any have seen the biggest rise in temperature?
+  
+2. Background on the trend of global emissions over time. 
+
+    * What countries have had the largest emissions?
+ 
+    * How have CO2 emissions trended over time compared to Global Temperature?
+ 
+
+3. Comparing CO2 to the rest of the Greenhouse gases.
+
+    * How impactful are each greenhouse gas emission levels?
+  
+    * Are they all trending upward?
+
+
+\newpage
+
+# Analysis: Data Analysis and Results 
+
+## 1. Global Temperatures Over Time. 
+
+In order to understand how temperature has been trending globally, some analysis is required on the data. To start, I calculated the average global temperature per month from 1850. To be able to visualize, it is easiest to look at it on the global stage. By taking the mean, we can see the differences from 2013 and 1850 and everything in between.  After taking the mean, I plotted the time-series data with a line graph, to show the average temperatures over time. They are separated by month, so we can see how they have trended. 
+
+By just looking at the visualization, we can see the average temperatures have trended upward over time. Especially considering the "winter" months, when the majority of the world experiences their coldest weather (December, January and February) saw a bigger movement than the typical "summer" months.  These are the winter months of the northern hemisphere of the globe, which on average has yearly colder temperatures than the southern hemisphere. While the southern hemisphere is not in their winter season during December, January and February, we still see that these months average the coldest temperatures over time. 
+
+We see this biggest and most noticeable jump in the bottom left of our plot from 1850 to about 1900. From there it is more of a slight and steady incline. If you hover over the lines, you can see the date and global average temperature at that specific point. 
+
+
+```{r,message = FALSE}
+
+#creating plot of average temp over time by month
+library(ggplot2)
+library(ggthemes)
+library(plotly)
+
+Average_Temp_by_year <- Global_Temp_country %>% 
+      group_by(Date) %>% 
+      summarise(Global_Avg = mean(AverageTemperature, na.rm = T))
+
+col.names1 <- c("Year", "Month", "Day")
+
+Average_Temp_by_year <- separate(Average_Temp_by_year, "Date",
+                                into = col.names1,
+                                sep = "-",
+                                remove = FALSE)
+#creating each line on plot, filtering by month
+plot1 <- ggplot() + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "01"),aes(x = Date, y = Global_Avg, color = Month)) +  
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "02"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "03"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "04"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "05"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "06"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "07"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "08"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "09"),aes(x = Date, y = Global_Avg, color = Month)) + 
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "10"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "11"),aes(x = Date, y = Global_Avg, color = Month)) +
+  geom_line(data = Average_Temp_by_year %>% filter(Month == "12"),aes(x = Date, y = Global_Avg, color = Month)) +
+  labs(x = "Year" , y = "Global Average Temperature", title = "Figure 1: Average Temperature Over Time by Month") +
+  scale_color_hue(name = "Month", labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+fig1 <- ggplotly(plot1) %>%  layout(autosize= T, width = 1000, height = 750)
+print(fig1)
+
+new <- filter(Average_Temp_by_year, Year == "2012") 
+mean2012 <- mean(Average_Temp_by_year$Global_Avg)
+
+```
+
+
+
+
+\newpage
+
+Below in table 3, we can explore more of the numbers behind the line graph visualization. We can see from the line graph that the temperature is steadily rising, but home much specifically?  Table 3 shows the average global temperature by year and month in degrees celsius in two years. The first year is 1850, our oldest year in the data set, and the year 2012/2013, the newest data in the data set. In the final column of the table, we can see the difference in global average temperature between the two years.
+ 
+```{r}
+#column 1 year 1850
+col_1 <- c("1850","1850","1850","1850","1850","1850","1850","1850","1850","1850","1850","1850")
+
+#months col
+col_2 <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# global avg 1850
+col_3 <- c("9.4514", "12.5455", "13.7265","16.5740","19.0170", "21.8931", "23.0662", "22.7950", "20.2808"," 17.1664", "14.4022", "10.8179" )
+
+#year 2012/2012
+col_4 <- c("2013","2013","2013","2013","2013","2013","2013","2013","2013","2012", "2012","2012")
+
+#global avg 2012/2013
+col_5 <- c("15.0427", "15.9032", "17.2404", "19.3874", "21.4781", " 22.7445", "23.4717", "23.2979", "25.0651", "20.1340", "18.1039", "15.2891")
+
+#difference between 1850 and 2013 column
+
+col_6 <- c(" 5.591", "3.357", "3.514", "2.813", "2.461", "0.851", "0.405", "0.503", "4.784", "2.968", "3.702", "4.471")
+
+# row headers
+
+row_header <- c("Year", "Month", "Global Average Temperature 1850", "Year", "Month", "Global Average Temperature 2013", " Temperature Difference")
+
+# puts together all the columns
+comb_col <- cbind(col_1, col_2, col_3, col_4, col_2, col_5, col_6)
+
+
+rownames(comb_col) <- NULL
+colnames(comb_col) <- row_header
+
+# create table
+
+kable(comb_col,
+      linesep = "",
+      format = "html",
+      caption = "Comparing Global Average Temperature Degrees Celsius") %>% kable_styling(font_size = 14, latex_options = "HOLD_position") %>%
+  kable_classic_2(full_width = T) %>% 
+  column_spec(3, bold = T, background = "beige") %>% 
+  column_spec(6, bold = T, background = "beige") %>% 
+  column_spec(7, bold = T, color = "#cc5500")
+```
+
+We can see that temperatures have risen over the last 150+ years. The worlds temperature on average, has increased in every month since 1850. Specifically in September, November, December and January. As shown in our table of the "Difference in Global Temperature Average" November through March all saw increases of over 3 degrees celsius.  Rises in temperatures have had their affects, the most obvious being on the melting icecaps, and subsequent raising of sea levels. This is why it is one of the major priorities of The Paris Agreement. In order to slow down this rise, parties in the agreement must slow the emissions of green-house gases.
+
+\newpage
+ 
+ 
+## 2. Gas Emissions and Their Affects Over Time 
+
+
+The majority of Earths atmosphere is made up of nitrogen and oxygen at 78 and 21 percent respectively.  Many other gases comprise the remaining one percent. Though the percentage of these other gases is not high, that does not mean they cannot react with other gases.  Therefore, it is not to say that these gases do not have a large influence on climate. Some of these other gasses that play a large role, are greenhouse gases. The metaphor explains that like the windows in a greenhouse, these gases trap energy from the sun as heat. Without their role, the Earth would become quite cold. According to National Oceanic and the Atmospheric Administration (NOAA), global temperatures would average around -18 degrees celsius. Instead, the world is averaging around 18.3 degrees celsius. 
+
+Since about 1850, as a result of human activities, extra greenhouse gases have been released into the air. This has slowly propelled a rise in average temperatures across the world as we have seen. One of the most well known gases is Carbon Dioxide, or CO2. We will break down later just how impactful it is compared to the other greenhouse gases. CO2 is released mainly from burning fossil fuels such as coal, oil and natural gas that are used to power every day life-machinery. CO2 is extremely abundant, and therefor plays a role in trapping heat in the atmosphere. 
+
+In start the analysis, there are two plots below. Figure 2 will look at what countries have emitted the most CO2 for the time period of 1850-2013 in tons. This figure is done over time. Figure 3 is a bar chart of the total CO2 emissions for the top 5 countries in figure 2, to the Top 8 regions' totals for comparison.
+
+```{r, fig.height= 7.5, fig.width= 9}
+library(ggthemes)
+# for summary stats, need to get rid of statistical difference # that is negative
+
+no_neg <- filter(co2_emission, !(Entity == "Statistical differences"))
+
+#creating list of top 10 countries by co2 emissions
+Co2_country_totals <- co2_emission %>% 
+                    group_by(Entity) %>% 
+                    summarise(total_emissions = sum(CO2_emissions, na.rm = T))
+
+top18 <- Co2_country_totals %>%  top_n(18, total_emissions)
+
+world_average <- mean(no_neg$CO2_emissions)
+
+#plotting top 5 countries by country over time, notice top 18 incluldes regions, regions were ommitted in the plot
+plot2 <- ggplot() +
+  geom_line(data = co2_emission %>%  filter(Entity == "China"), aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_line(data = co2_emission %>%  filter(Entity == "Germany"), aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_line(data = co2_emission %>%  filter(Entity == "Russia"), aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_line(data = co2_emission %>%  filter(Entity == "United Kingdom"), aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_line(data = co2_emission %>%  filter(Entity == "United States"), aes(x = Year, y = CO2_emissions, color = Entity)) +
+  geom_hline(yintercept = world_average, color = "black") +
+  scale_x_continuous(breaks = seq(1850,2017, by = 20)) + 
+  labs(y = "CO2 Emissions (tons)", title = "Figure 2: Top 5 Countries CO2 Emissions Over Time") +
+  scale_y_continuous(trans = 'sqrt') +
+  scale_color_discrete("Country")+
+  theme(axis.text.x = element_text(angle = 30)) + 
+  theme_fivethirtyeight()
+
+
+fig2 <- ggplotly(plot2)
+print(fig2)
+
+```
+
+
+From Figure 2, the "Top 5 Countries CO2 Emissions Over Time" visual, we can see the familiar trend line we saw with Figure 1. However, this graph shows that it is not the slow and steady climb like our temperature graph. Again, running just the top 5 countries you can see that they have taken different paths to get to the levels they are at now. For instance, China in 1950 was below average for the world (denoted by the black line), and has since shot up tremendously, playing a significant role in our dangerous levels of total emissions.  Other countries in contrast have been trending downward or steady in the last 20 years.  The hope of The Paris Agreement, that had just gone into effect at the tail end of this data set, is to see more of these lines trending downward.
+
+
+\newpage
+
+```{r, out.width= '100%'}
+#plotting a bar graph of top 5 countries plus 8 regions
+top13 <- top18[-c(4,8,10,12,14),]
+
+
+plot3 <- ggplot(data = top13) + 
+  geom_col(aes( x = reorder(Entity, - total_emissions), y = total_emissions, fill = Entity),color = "black") + 
+  labs( x = "Country or Region", y = "Total CO2 Emissions (tons)", title = " Figure 3: Total CO2 Emission of the Top 5 Countries and Top 8 Regions") +
+  theme(axis.text.x = element_text(angle = 35))
+
+fig3 <- ggplotly(plot3)
+fig3<- fig3 %>%  layout(autosize= F, width = 1000, height = 550)
+print(fig3)
+```
+
+\newpage
+
+From the CO2 emissions data, I was able to get the sum of CO2 emissions by country for the period of 1850 to present day. I then compared these top 5 emitters to the top regions in the world.  The largest bar, being the world, helps us to see what proportion these five countries have really emitted compared to the total. It is expected that larger countries with higher population and industrialization would emit the most CO2, given how it is used in everyday life by citizens. It is still interesting to see who contributes the most.  It is also notable, how far above the average these five countries are. The average CO2 emissions is 211,031,137.76 tons for the time period of 1850-2013. This group is so far ahead of the rest of the world, that the average line on the graph essentially touched the x-axis, and was therefor omitted. 
+
+The largest culprit is the United States. Comparing regions and countries total emissions also gives us insights into the amount of industrialization these areas have. We can see that the United states and China individually emit more than Europe, the rest of the Americas, the Middle East, and Africa. Size, as well as other key factors such as industrialization as mentioned, play a large role, and is an explaining factor in why this data has such a large standard deviation of 1,405,967,188 tons and range of 36,153,261,645 tons. 
+
+
+\newpage
+
+## 3. Breaking Down Emission by Type
+
+Finally, we will examine the emission levels by the specific type of gas. This uses the third data set described, "Greenhouse Gas Emissions by Category and Country".  Figure 4, shows the total emissions in tons, by each category of gas described earlier. This data is the cumulative total from 1990 to 2014.  You can hover over each specific bar to get the total emissions of that gas type. The following table, table number 3, will give us more details about each gas, including the proportion of the total emissions for each.
+
+```{r , fig.height=6, fig.width=6}
+#total emission levels by type of gas
+Gas_types <-greenhouse_gas_data %>% 
+            group_by(category) %>% 
+            summarise(total_value = sum(value, na.rm = T))
+
+Gas_types <- Gas_types %>% 
+           mutate(total_em = sum(total_value),
+           prop_em = total_value/ total_em)
+
+plot4a <- ggplot(data = Gas_types) + 
+  geom_col(aes(x= category, y= total_value, fill = category), stat = "identity", color = "black") +
+  theme(axis.text.x = element_text(angle = 30)) +
+  labs(x = "Type of Gas", y = "Total Emissions (tons)", title = "Figure 4: Total Emissions from 1990-2014 in Tons, by Type of Gas")
+
+#wouldn't let me remove plot ^ for some reason
+plot4 <- plot4a + theme(legend.position = "none") + ylim(0,610000000)
+
+#making the plot interactive
+fig4 <- ggplotly(plot4)
+fig4<- fig4 %>%  layout(autosize= F, width = 1000, height = 550)
+print(fig4)
+
+```
+
+```{r}
+# create a nice table for gas total and proportion. info from gas_types 
+
+Header_names2 <- c("Category of Gas", "Total Emissions (tons)", "Proportion of Emissions to Total")
+
+#column 1 - gas names
+Col_one <- c("CO2", "GHGs without Lulucf","GHG with Lulucf", "HFCS", "CH4", "NF3", "N2O", "PFCS", "SF6", "Unspecified mix of HFCS and PFCS")
+
+#col2 total emissions
+
+Col_two <- Gas_types$total_value
+
+#col3 proportion
+
+col_three <- round(Gas_types$prop_em,6)
+
+#combining data
+table3 <- cbind(Col_one, Col_two, col_three)
+
+rownames(table3) <- NULL
+colnames(table3) <- Header_names2
+
+#produce table
+kable(table3, 
+      linesep = "",
+      format = "html",
+      caption = "Emission Totals by Gas Type and Proportion") %>% kable_styling(font_size = 14, latex_options = "HOLD_position") %>%
+  kable_classic_2(full_width = T) %>% 
+  column_spec(3, bold = T, color = "#cc5500")
+
+```
+
+
+
+From the plot and the proportions table, we can which gases have been causing the most emissions.  Greenhouse gases with and without Lululcf have the largest total emissions, followed closely by CO2. From there, the proportions drop off significantly. Lulucf, or "land use, land-use change and forestry" referees to emissions and removal of greenhouse gases resulting from human activities in the land sector.  In some countries, Lululcf is a significant net emissions source due to deforestation and conversion of peatlands (terrestrial wetland ecosystem, great for carbon storage). In others, it is a net sink due to absorption of CO2 by forests.  Under the United Nations framework, any process or activity which removes greenhouse gas from the atmosphere is referred to as a "sink". The role of Lulucf activities in the mitigation of climate change has long been recognized, and it is why, along with the other gases listed, it is required that countries report these particular emissions figures.  GHGs with and without Lulucf we see have a large proportion of the total emissions totals, and because of this managing these emissions is an important role. 
+
+To wrap up this analysis, and see if the trend continues, we will look at emission levels by gas type over time. Figure 5 displays this for the time range of this data set from 1990 to 2015.
+
+```{r, fig.height= 6, fig.width= 8, fig.align= 'center'}
+# plot of emission levels by each gas type  over time 1990-2015
+Gas_types_year <-greenhouse_gas_data %>% group_by(category, year) %>% summarise(total_value = sum(value, na.rm = T))
+
+plot5 <- ggplot(data = Gas_types_year) + 
+  geom_line(data = Gas_types_year %>%  filter(category == "CO2"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "GHG_without_Lulucf"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "GHG_with_Lulucf"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "HFCS"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "CH4"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "NF3"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "N20"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "PFCS"), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "SF6 "), aes(x = year, y = total_value, color = category)) +
+  geom_line(data = Gas_types_year %>%  filter(category == "Unspecified_mix_HFCS_PFCS"), aes(x = year, y = total_value, color = category)) +
+  labs(x = "Year", y= "Total Emissions", title = "Figure 5: Emissions Levels by Gas Type over Time") 
+
+print(plot5) 
+
+# plot would not become interactive/ go through plotly? still trouble shooting
+
+```
+  
+
+Finally we can look at the last trend of this report, the "Emissions Level by Gas Type over Time". This data set does not range as far back as the first two, but it is still important to note that this range exists when the conversation about climate change really picked up. We can see that the three largest emitters are trending slightly downwards since the mid-2000s. The other gases have stayed steady at a much lower rate.  Though the Paris Agreement was not enacted until 2015, the United Nations had an intergovernmental body called the Intergovernmental Panel On Climate Change, or IPCC at work since 1988. The IPCC produces reports that contribute to the work of the UN convention on climate change, and has published reports in 1990, 1995, 2001, 2007 and 2014, each more serious than the last. It is possible more serious reports from establishments like this, as well as other pressures cause the slight trend downward we see. This is definitely a topic to be further investigated, especially if there is any correlation to other world events such as the financial recession.
+  
+
+
+# Conclusions and Future Work 
+
+While this data just scratched the surface on the biggest talking points around climate change, it was still useful to understand how these things are trending.  By doing some time-series analysis, we can see the trends for temperature and CO2 emissions for the past 150+ years, and to begin to understand why they are a focal point for the conversation around climate change, and specifically The Paris Agreement.  Both temperature and CO2 emissions rose steadily over the past century in a cause and effect like manor. We determined that all months in the calender year saw increases in temperature, some larger than others. November through March all saw increases of over 3 degrees celsius. Through visualization we saw where some countries rose well above the average CO2 emissions rate in the world, and are contributing factors to these high levels. 
+
+Finally we looked at the emissions by type of gas. This trend line, shown over the last 25 years, was actually trending downward. With the emphasize on climate changing increasing over this time, more than ever before, some change has been made. What we see in the plot can be connected to the the trend of just CO2 emissions by country, where the majority of the top 10 countries were trending downward in CO2 emissions, or steadying off in the last 20 years. If this downward trend of emissions continues, the temperatures trend line will need revisited, to see if that has followed suit. 
+
+Going forward, it is important to take a deeper dive into this information. With regards to The Paris Agreement, what levels of CO2 and other greenhouse gas emissions will we need to see in order to meet the goal of slowing temperature increase in the next century? Delving even further into the specific gas emissions, I would look into what specific gas release has the most negative impact on holding in heat in the atmosphere.  We were able to see what gas has emitted the most over the past 25 years, which are Greenhouse gases with and without lulucf, followed closely by carbon dioxide. Looking into what specific kinds of human activity has the biggest impact on these emissions would be helpful in understanding where human focus needs to lie. The Paris Agreement has a whole host of subjects that can be further investigated, including all methods to curb emissions, the effects of countries not joinging the agreement (or leaving it), and as well as the affects of alternative energy.  With each passing year, we will have more sufficient data on the subject so that those avenues can, and should, be investigated. 
+
+
+
